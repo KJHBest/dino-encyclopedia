@@ -19,13 +19,21 @@
   };
 
   /* ---------- 음성 읽기 ---------- */
+  const isIOS =
+    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS
+
   const tts = {
     ok: "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
     voice: null,
     button: null,
+    timer: 0,
   };
 
   function pickVoice() {
+    // 아이폰·아이패드는 음성을 직접 고르면 소리가 안 나는 경우가 있어
+    // 기기의 기본 한국어 음성을 쓰게 둡니다.
+    if (isIOS) return;
     const voices = speechSynthesis.getVoices().filter((v) => /^ko/i.test(v.lang));
     // 자연스러운 음성(Google, Natural, Online)을 우선으로 고릅니다.
     tts.voice =
@@ -39,11 +47,24 @@
     btn.setAttribute("aria-pressed", String(on));
   }
 
+  function showSpeechHelp() {
+    const n = $("#tts-notice");
+    n.textContent = isIOS
+      ? "소리가 안 들리면: 제어 센터에서 무음 모드(🔔)를 끄고 볼륨을 올려 주세요. 그래도 안 되면 설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성 → 한국어에서 음성을 내려받아 주세요."
+      : "음성을 재생하지 못했어요. 기기의 소리를 켜거나 다른 브라우저(크롬, 사파리, 엣지)에서 열어 보세요.";
+    n.hidden = false;
+  }
+
+  // 아이폰·아이패드 사파리는 cancel() 직후 바로 speak()하면 소리가 사라지는 문제가 있어,
+  // 읽는 중일 때만 멈추고 다음 말은 조금 있다가 시작합니다.
   function stopSpeaking() {
-    if (!tts.ok) return;
-    speechSynthesis.cancel();
+    if (!tts.ok) return false;
+    clearTimeout(tts.timer);
+    const wasBusy = speechSynthesis.speaking || speechSynthesis.pending;
+    if (wasBusy) speechSynthesis.cancel();
     setSpeaking(tts.button, false);
     tts.button = null;
+    return wasBusy;
   }
 
   // 받침이 있으면 "이에요", 없으면 "예요"
@@ -58,34 +79,48 @@
     return `${d.name}. 이름의 뜻은, ${d.meaning}. ${d.era}에 살았던 ${d.diet} ${ieyo(kind)}. ${d.desc}`;
   }
 
-  // 클릭 핸들러 안에서 바로 호출해야 iOS 사파리에서도 소리가 납니다.
+  // 처음 누를 때는 클릭 핸들러 안에서 바로 speak()해야 iOS에서 소리가 납니다.
   function speak(d, btn) {
     if (!tts.ok) return;
-    const same = tts.button === btn && speechSynthesis.speaking;
-    stopSpeaking();
-    if (same) return; // 같은 버튼을 다시 누르면 멈춤
+    const same = tts.button === btn;
+    const wasBusy = stopSpeaking();
+    if (same && wasBusy) return; // 같은 버튼을 다시 누르면 멈춤
 
     const u = new SpeechSynthesisUtterance(speechText(d));
     u.lang = "ko-KR";
     u.rate = state.rate;
+    u.volume = 1;
     if (tts.voice) u.voice = tts.voice;
-    u.onerror = (e) => {
-      if (e.error !== "interrupted" && e.error !== "canceled") {
-        const n = $("#tts-notice");
-        n.textContent = "음성을 재생하지 못했어요. 기기의 소리를 켜거나 다른 브라우저(크롬, 사파리, 엣지)에서 열어 보세요.";
-        n.hidden = false;
-      }
-      u.onend();
-    };
+    let started = false;
+    u.onstart = () => { started = true; };
     u.onend = () => {
       if (tts.button === btn) {
         setSpeaking(btn, false);
         tts.button = null;
       }
     };
+    u.onerror = (e) => {
+      if (e.error !== "interrupted" && e.error !== "canceled") showSpeechHelp();
+      u.onend();
+    };
     tts.button = btn;
     setSpeaking(btn, true);
-    speechSynthesis.speak(u);
+
+    const go = () => {
+      if (tts.button !== btn) return;
+      speechSynthesis.resume(); // iOS에서 멈춤 상태로 남아 있는 경우 풀기
+      speechSynthesis.speak(u);
+      // 3초가 지나도 시작하지 않으면 도움말을 보여 줍니다.
+      setTimeout(() => {
+        if (!started && tts.button === btn && !speechSynthesis.speaking) {
+          showSpeechHelp();
+          setSpeaking(btn, false);
+          tts.button = null;
+        }
+      }, 3000);
+    };
+    if (wasBusy) tts.timer = setTimeout(go, 250);
+    else go();
   }
 
   if (tts.ok) {
@@ -329,9 +364,6 @@
   /* ---------- 앱처럼 설치 (홈 화면에 추가) ---------- */
   const standalone =
     window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  const isIOS =
-    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS
   if (isIOS && !standalone && !localStorage.getItem("dino-install-hint-closed")) {
     $("#install-hint").hidden = false;
   }
