@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>공룡 백과사전 🦖</title>
+  <meta name="description" content="사진과 음성으로 만나는 어린이 공룡 백과사전" />
+  <meta name="theme-color" content="#2f7d4f" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <h1 class="logo"><span aria-hidden="true">🦖</span> 공룡 백과사전</h1>
+      <div class="tools">
+        <label class="search">
+          <span class="sr-only">공룡 이름 검색</span>
+          <input id="search" type="search" placeholder="공룡 이름 찾기 (예: 티라노)" autocomplete="off" />
+        </label>
+        <button id="random" class="btn btn-accent" type="button">🎲 랜덤 공룡</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="filters" aria-label="필터">
+      <div class="chip-row" role="group" aria-label="시대">
+        <span class="chip-label">시대</span>
+        <div id="era-chips" class="chips"></div>
+      </div>
+      <div class="chip-row" role="group" aria-label="식성">
+        <span class="chip-label">식성</span>
+        <div id="diet-chips" class="chips"></div>
+      </div>
+      <div class="chip-row" role="group" aria-label="읽는 속도">
+        <span class="chip-label">읽기 속도</span>
+        <div id="speed-chips" class="chips"></div>
+      </div>
+    </section>
+
+    <p id="tts-notice" class="notice" hidden>이 브라우저는 음성 읽기를 지원하지 않아요. 크롬, 사파리, 엣지에서 열어 보세요.</p>
+    <p id="count" class="count" aria-live="polite"></p>
+
+    <ul id="grid" class="grid"></ul>
+    <p id="empty" class="empty" hidden>🔍 찾는 공룡이 없어요. 다른 이름으로 찾아볼까요?</p>
+  </main>
+
+  <dialog id="detail" class="detail" aria-labelledby="d-name">
+    <button class="close" type="button" aria-label="닫기" data-close>✕</button>
+    <div class="d-img-wrap"></div>
+    <div class="d-body">
+      <p id="d-note" class="tag tag-note" hidden></p>
+      <h2 id="d-name"></h2>
+      <p id="d-latin" class="latin"></p>
+      <dl class="facts">
+        <div><dt>이름 뜻</dt><dd id="d-meaning"></dd></div>
+        <div><dt>시대</dt><dd id="d-era"></dd></div>
+        <div><dt>식성</dt><dd id="d-diet"></dd></div>
+        <div><dt>크기</dt><dd id="d-size"></dd></div>
+        <div><dt>발견 장소</dt><dd id="d-place"></dd></div>
+      </dl>
+      <p id="d-desc" class="desc"></p>
+      <div class="d-actions">
+        <button id="d-speak" class="btn btn-speak btn-big" type="button">🔊 읽어주기</button>
+        <div class="d-nav">
+          <button id="d-prev" class="btn" type="button" aria-label="이전 공룡">◀ 이전</button>
+          <button id="d-next" class="btn" type="button" aria-label="다음 공룡">다음 ▶</button>
+        </div>
+      </div>
+      <a id="d-wiki" class="wiki" href="#" target="_blank" rel="noopener">위키백과에서 더 알아보기 ↗</a>
+    </div>
+  </dialog>
+
+  <footer class="foot">
+    <p>그림은 AI(Codex)로 그린 상상도예요. 실제 공룡의 색은 아직 아무도 몰라요!</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
