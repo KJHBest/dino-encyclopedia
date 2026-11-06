@@ -2,7 +2,11 @@
   "use strict";
 
   const $ = (sel) => document.querySelector(sel);
-  const imgSrc = (d, thumb) => `images/${thumb ? "thumb/" : ""}${d.id}.webp`;
+  // 가로형 그림(_wide)을 먼저 쓰고, 없으면 정사각형 그림을 씁니다.
+  const imgSrcs = (d, thumb) => {
+    const dir = `images/${thumb ? "thumb/" : ""}`;
+    return [`${dir}${d.id}_wide.webp`, `${dir}${d.id}.webp`];
+  };
   const emoji = (d) => (d.diet === "육식" ? "🦖" : "🦕");
 
   const state = {
@@ -143,11 +147,15 @@
   /* ---------- 카드 목록 ---------- */
   function imageEl(d, thumb) {
     const img = document.createElement("img");
-    img.src = imgSrc(d, thumb);
+    const srcs = imgSrcs(d, thumb);
+    img.src = srcs.shift();
     img.alt = `${d.name} 그림`;
     img.loading = thumb ? "lazy" : "eager";
     img.decoding = "async";
-    img.addEventListener("error", () => img.remove()); // 그림이 없으면 이모지가 보입니다
+    img.addEventListener("error", () => {
+      if (srcs.length) img.src = srcs.shift();
+      else img.remove(); // 그림이 없으면 이모지가 보입니다
+    });
     return img;
   }
 
@@ -221,13 +229,16 @@
   function fillDetail(idx) {
     const d = DINOSAURS[idx];
     state.current = idx;
-    const wrap = $(".d-img-wrap");
+    const wrap = $(".v-bg");
     wrap.textContent = emoji(d);
     wrap.appendChild(imageEl(d));
     $("#d-name").textContent = d.name;
     $("#d-latin").textContent = d.latin;
     $("#d-meaning").textContent = d.meaning;
     $("#d-era").textContent = d.era;
+    $("#d-era-tag").textContent = `${d.era} · ${d.diet}`;
+    const list = state.visible.length ? state.visible : DINOSAURS;
+    $("#d-count").textContent = `${list.indexOf(d) + 1} / ${list.length}`;
     $("#d-diet").textContent = d.diet;
     $("#d-size").textContent = d.size;
     $("#d-place").textContent = d.place;
@@ -236,13 +247,16 @@
     note.hidden = !d.note;
     note.textContent = d.note || "";
     $("#d-wiki").href = `https://ko.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(d.name)}`;
-    dialog.scrollTop = 0;
+    $(".v-scroll").scrollTop = 0;
   }
 
   function openDetail(idx) {
     stopSpeaking();
     fillDetail(idx);
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) {
+      togglePanel(false);
+      dialog.showModal();
+    }
   }
 
   function step(dir) {
@@ -258,8 +272,38 @@
   $("#d-prev").addEventListener("click", () => step(-1));
   $("#d-next").addEventListener("click", () => step(1));
   dialog.querySelector("[data-close]").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("click", (e) => {
-    if (e.target === dialog) dialog.close(); // 바깥 어두운 부분 클릭
+  // 그림만 크게 보기 (설명 패널 숨기기/보이기)
+  function togglePanel(force) {
+    const hide = dialog.classList.toggle("hide-panel", force);
+    const t = $("#d-toggle");
+    t.setAttribute("aria-pressed", String(hide));
+    t.setAttribute("aria-label", hide ? "설명 보기" : "설명 숨기기");
+    t.textContent = hide ? "📖" : "🖼️";
+  }
+  $("#d-toggle").addEventListener("click", () => togglePanel());
+  $(".v-bg").addEventListener("click", () => togglePanel());
+
+  // 🔍 목록으로 돌아가서 바로 검색
+  $("#d-search").addEventListener("click", () => {
+    dialog.close();
+    const s = $("#search");
+    s.scrollIntoView({ block: "center" });
+    s.focus();
+    s.select();
+  });
+
+  // 손가락으로 좌우로 밀어서 넘기기
+  let touchX = null, touchY = null;
+  dialog.addEventListener("touchstart", (e) => {
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+  }, { passive: true });
+  dialog.addEventListener("touchend", (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    const dy = e.changedTouches[0].clientY - touchY;
+    touchX = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
   });
   dialog.addEventListener("close", stopSpeaking);
   dialog.addEventListener("keydown", (e) => {

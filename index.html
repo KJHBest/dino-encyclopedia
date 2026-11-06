@@ -7,7 +7,7 @@
   <meta name="description" content="사진과 음성으로 만나는 어린이 공룡 백과사전" />
   <meta name="theme-color" content="#2f7d4f" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
   <header class="top">
@@ -46,37 +46,40 @@
     <p id="empty" class="empty" hidden>🔍 찾는 공룡이 없어요. 다른 이름으로 찾아볼까요?</p>
   </main>
 
-  <dialog id="detail" class="detail" aria-labelledby="d-name">
-    <button class="close" type="button" aria-label="닫기" data-close>✕</button>
-    <div class="d-img-wrap"></div>
-    <div class="d-body">
-      <p id="d-note" class="tag tag-note" hidden></p>
-      <h2 id="d-name"></h2>
-      <p id="d-latin" class="latin"></p>
-      <dl class="facts">
-        <div><dt>이름 뜻</dt><dd id="d-meaning"></dd></div>
-        <div><dt>시대</dt><dd id="d-era"></dd></div>
-        <div><dt>식성</dt><dd id="d-diet"></dd></div>
-        <div><dt>크기</dt><dd id="d-size"></dd></div>
-        <div><dt>발견 장소</dt><dd id="d-place"></dd></div>
-      </dl>
-      <p id="d-desc" class="desc"></p>
-      <div class="d-actions">
-        <button id="d-speak" class="btn btn-speak btn-big" type="button">🔊 읽어주기</button>
-        <div class="d-nav">
-          <button id="d-prev" class="btn" type="button" aria-label="이전 공룡">◀ 이전</button>
-          <button id="d-next" class="btn" type="button" aria-label="다음 공룡">다음 ▶</button>
+  <dialog id="detail" class="viewer" aria-labelledby="d-name">
+    <div class="v-bg"></div>
+    <button class="v-round v-back" type="button" aria-label="목록으로 돌아가기" data-close>←</button>
+    <button id="d-toggle" class="v-round v-toggle" type="button" aria-label="설명 숨기기" aria-pressed="false">🖼️</button>
+    <section class="v-panel">
+      <div class="v-scroll">
+        <p id="d-note" class="tag tag-note" hidden></p>
+        <h2 id="d-name"></h2>
+        <p class="v-sub"><span id="d-latin" class="latin"></span> · <span id="d-era-tag"></span></p>
+        <div class="v-sec"><h3>이름의 뜻</h3><p id="d-meaning"></p></div>
+        <div class="v-sec"><h3>어떤 공룡일까?</h3><p id="d-desc"></p></div>
+        <div class="v-sec v-facts">
+          <div><h3>살았던 시대</h3><p id="d-era"></p></div>
+          <div><h3>먹이</h3><p id="d-diet"></p></div>
+          <div><h3>크기</h3><p id="d-size"></p></div>
+          <div><h3>발견 장소</h3><p id="d-place"></p></div>
         </div>
+        <button id="d-speak" class="btn btn-speak btn-big" type="button">🔊 읽어주기</button>
+        <a id="d-wiki" class="wiki" href="#" target="_blank" rel="noopener">위키백과에서 더 알아보기 ↗</a>
       </div>
-      <a id="d-wiki" class="wiki" href="#" target="_blank" rel="noopener">위키백과에서 더 알아보기 ↗</a>
-    </div>
+      <nav class="v-nav" aria-label="공룡 넘기기">
+        <button id="d-prev" type="button" aria-label="이전 공룡">◀ 이전</button>
+        <button id="d-next" type="button" aria-label="다음 공룡">다음 ▶</button>
+        <span id="d-count" class="v-count"></span>
+        <button id="d-search" type="button" aria-label="공룡 찾기">🔍</button>
+      </nav>
+    </section>
   </dialog>
 
   <footer class="foot">
     <p>그림은 AI(Codex)로 그린 상상도예요. 실제 공룡의 색은 아직 아무도 몰라요!</p>
   </footer>
 
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=2"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

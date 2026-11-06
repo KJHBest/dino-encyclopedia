@@ -19,7 +19,9 @@ for png in img_dir.glob("*.png"):
     png.replace(orig_dir / png.name)
 
 for png in sorted(orig_dir.glob("*.png")):
-    for size, out_dir, quality in ((1024, img_dir, 82), (480, thumb_dir, 78)):
+    # 가로형(_wide) 그림은 전체 화면 배경이라 더 크게 저장합니다.
+    big = 1600 if png.stem.endswith("_wide") else 1024
+    for size, out_dir, quality in ((big, img_dir, 80), (480, thumb_dir, 78)):
         out = out_dir / (png.stem + ".webp")
         if out.exists() and out.stat().st_mtime >= png.stat().st_mtime:
             continue
