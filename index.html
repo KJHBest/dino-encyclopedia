@@ -2,12 +2,18 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>공룡 백과사전 🦖</title>
   <meta name="description" content="사진과 음성으로 만나는 어린이 공룡 백과사전" />
   <meta name="theme-color" content="#2f7d4f" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦖</text></svg>" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="공룡 백과" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <header class="top">
@@ -39,6 +45,11 @@
       </div>
     </section>
 
+    <div id="install-hint" class="install-hint" hidden>
+      <span aria-hidden="true">📲</span>
+      <p><b>앱처럼 설치하기:</b> 사파리 위쪽의 <b>공유 버튼(□↑)</b>을 누르고 <b>"홈 화면에 추가"</b>를 고르세요. 한 번 열어 두면 인터넷이 없어도 볼 수 있어요.</p>
+      <button id="install-close" type="button" aria-label="안내 닫기">✕</button>
+    </div>
     <p id="tts-notice" class="notice" hidden>이 브라우저는 음성 읽기를 지원하지 않아요. 크롬, 사파리, 엣지에서 열어 보세요.</p>
     <p id="count" class="count" aria-live="polite"></p>
 
@@ -79,7 +90,7 @@
     <p>그림은 AI(Codex)로 그린 상상도예요. 실제 공룡의 색은 아직 아무도 몰라요!</p>
   </footer>
 
-  <script src="data.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="data.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

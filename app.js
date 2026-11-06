@@ -326,5 +326,24 @@
     openDetail(pick);
   });
 
+  /* ---------- 앱처럼 설치 (홈 화면에 추가) ---------- */
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const isIOS =
+    /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS
+  if (isIOS && !standalone && !localStorage.getItem("dino-install-hint-closed")) {
+    $("#install-hint").hidden = false;
+  }
+  $("#install-close").addEventListener("click", () => {
+    $("#install-hint").hidden = true;
+    localStorage.setItem("dino-install-hint-closed", "1");
+  });
+
+  // 오프라인 저장
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js"));
+  }
+
   render();
 })();

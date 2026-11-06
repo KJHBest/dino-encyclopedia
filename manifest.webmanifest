@@ -1,0 +1,17 @@
+{
+  "name": "공룡 백과사전",
+  "short_name": "공룡 백과",
+  "description": "사진과 음성으로 만나는 어린이 공룡 백과사전",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff8ea",
+  "theme_color": "#2f7d4f",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
