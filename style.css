@@ -262,3 +262,20 @@ button { font: inherit; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* 공룡 테마파크로 가기 */
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+.btn-park { background: var(--green); color: #fff; }
+.park-banner {
+  display: flex; align-items: center; gap: 14px; margin: 14px 0 4px; padding: 14px 18px;
+  border-radius: 22px; text-decoration: none; color: #fff;
+  background: linear-gradient(120deg, #2f7d4f, #5fae5c 60%, #f2a33a);
+  box-shadow: 0 6px 18px rgba(47, 125, 79, 0.35);
+}
+.park-banner:active { transform: scale(0.98); }
+.park-emoji { font-size: 2.4rem; flex: none; }
+.park-text { flex: 1; display: flex; flex-direction: column; }
+.park-text b { font-size: 1.35rem; }
+.park-text small { font-size: 0.95rem; opacity: 0.95; }
+.park-go { font-size: 1.6rem; background: rgba(255, 255, 255, 0.25); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex: none; }
+@media (max-width: 520px) { .park-emoji { font-size: 1.8rem; } .park-text b { font-size: 1.1rem; } .btn-park { display: none; } }

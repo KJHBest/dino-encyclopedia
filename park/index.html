@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>다이노 파크</title>
+  <meta name="description" content="지프를 타고 공룡 테마파크를 돌아다니며 공룡을 만나는 어린이 3D 게임" />
+  <meta name="theme-color" content="#2f7d4f" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="다이노 파크" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="css/style.css?v=2" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="c" aria-label="공룡 테마파크 3D 화면"></canvas>
+
+  <!-- 화면 위 정보 -->
+  <div id="hud" hidden>
+    <div class="hud-tl">
+      <button id="found" class="pill" type="button" aria-label="찾은 공룡 수, 도감 열기">
+        🦖 <b id="found-n">0</b><small> / <span id="found-total">22</span></small>
+      </button>
+      <div id="guide" class="pill guide" hidden>
+        <span id="guide-arrow" class="guide-arrow">⬆</span>
+        <span id="guide-text"></span>
+        <button id="guide-x" type="button" aria-label="안내 그만">✕</button>
+      </div>
+    </div>
+    <div class="hud-tr">
+      <canvas id="map" width="300" height="300" aria-label="공원 지도"></canvas>
+      <div class="side-btns">
+        <button id="b-book" class="round" type="button"><span>📖</span><small>도감</small></button>
+        <button id="b-honk" class="round" type="button"><span>📯</span><small>빵빵</small></button>
+        <button id="b-voice" class="round" type="button" aria-pressed="true"><span>🔊</span><small>자동 설명</small></button>
+        <a id="b-home" class="round" href="../"><span>📚</span><small>백과사전</small></a>
+      </div>
+    </div>
+
+    <div id="hint" class="hint">👆 화면을 손가락으로 <b>끌면</b> 지프가 그쪽으로 달려요<br /><small>공룡을 <b>톡</b> 누르면 이야기를 들려줘요 · 두 손가락으로 확대/회전</small></div>
+
+    <div id="card" class="card" hidden>
+      <img id="card-img" alt="" />
+      <div class="card-body">
+        <div id="card-name" class="card-name"></div>
+        <div id="card-sub" class="card-sub"></div>
+      </div>
+      <div class="card-btns">
+        <button id="card-speak" class="btn btn-speak" type="button">🔊 이야기</button>
+        <button id="card-book" class="btn" type="button">📖 도감</button>
+      </div>
+    </div>
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <!-- 끌기 조이스틱 -->
+  <div id="joy" class="joy" hidden><div class="knob"></div></div>
+
+  <!-- 시작 화면 -->
+  <div id="start" class="start">
+    <div class="start-box">
+      <div class="start-logo">🦖🚙🦕</div>
+      <h1>다이노 파크</h1>
+      <p>지프를 타고 공룡 테마파크를 돌아다니며<br />공룡 친구 <b id="start-total">22</b>마리를 모두 찾아 보세요!</p>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <button id="go" class="btn btn-go" type="button" disabled>준비 중…</button>
+      <p><a class="start-back" href="../">← 공룡 백과사전으로 돌아가기</a></p>
+    </div>
+  </div>
+
+  <!-- 공룡 도감 -->
+  <div id="book" class="book" hidden role="dialog" aria-label="공룡 도감">
+    <div class="book-head">
+      <h2>📖 공룡 도감 <small id="book-count"></small></h2>
+      <button id="book-close" class="round" type="button" aria-label="닫기"><span>✕</span></button>
+    </div>
+    <ul id="book-grid" class="book-grid"></ul>
+    <div id="detail" class="detail" hidden>
+      <button id="detail-back" class="detail-back" type="button">← 목록</button>
+      <img id="detail-img" alt="" />
+      <div id="detail-egg" class="egg egg-big" hidden>🥚</div>
+      <div class="detail-body">
+        <p id="detail-note" class="detail-note" hidden></p>
+        <h3 id="detail-name"></h3>
+        <p id="detail-latin" class="latin"></p>
+        <div id="detail-info"></div>
+        <div class="detail-btns">
+          <button id="detail-speak" class="btn btn-speak" type="button">🔊 읽어주기</button>
+          <button id="detail-go" class="btn btn-go-small" type="button">🧭 찾으러 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <script type="module" src="js/main.js?v=2"></script>
+</body>
+</html>

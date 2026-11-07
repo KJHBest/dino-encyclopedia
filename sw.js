@@ -1,14 +1,14 @@
 // 오프라인 저장: 한 번 열면 인터넷이 없어도 공룡 백과사전을 볼 수 있어요.
 // 파일을 바꾸면 VERSION 숫자를 올려 주세요.
-const VERSION = "dino-v5";
-importScripts("data.js?v=5"); // DINOSAURS 목록
+const VERSION = "dino-v6";
+importScripts("data.js?v=6"); // DINOSAURS 목록
 
 const CORE = [
   "./",
   "index.html",
-  "style.css?v=5",
-  "data.js?v=5",
-  "app.js?v=5",
+  "style.css?v=6",
+  "data.js?v=6",
+  "app.js?v=6",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
@@ -35,7 +35,8 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys()) {
-        if (key !== VERSION) await caches.delete(key);
+        // 공룡 테마파크(park/)의 저장 공간은 건드리지 않아요
+        if (key.startsWith("dino-v") && key !== VERSION) await caches.delete(key);
       }
       await self.clients.claim();
     })()
@@ -44,7 +45,10 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== location.origin) return;
+  // 공룡 테마파크(park/)는 자기 오프라인 저장(park/sw.js)을 써요
+  if (url.pathname.includes("/park/")) return;
 
   // 그림: 저장된 것을 먼저 씁니다.
   if (req.destination === "image") {
