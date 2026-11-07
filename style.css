@@ -74,6 +74,8 @@ button { font: inherit; cursor: pointer; }
 .btn-speak { background: #ffe9a8; }
 .btn-speak.speaking { background: var(--accent); color: #fff; animation: pulse 1s infinite; }
 .btn-big { font-size: 1.15rem; padding: 12px 22px; }
+.btn-auto { background: #d9f2e1; margin-top: 8px; }
+.btn-auto[aria-pressed="true"] { background: var(--green-dark); color: #fff; }
 
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 138, 61, 0.6); }

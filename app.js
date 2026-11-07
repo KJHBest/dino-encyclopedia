@@ -16,6 +16,7 @@
     rate: Number(localStorage.getItem("dino-rate")) || 1,
     current: -1, // 상세 보기에서 보고 있는 공룡 (DINOSAURS 인덱스)
     visible: [], // 지금 화면에 보이는 공룡 목록
+    auto: false, // 계속 넘기며 읽기 중인지
   };
 
   /* ---------- 음성 읽기 ---------- */
@@ -80,11 +81,13 @@
   }
 
   // 처음 누를 때는 클릭 핸들러 안에서 바로 speak()해야 iOS에서 소리가 납니다.
-  function speak(d, btn) {
+  // opts.onDone: 끝까지 다 읽었을 때 부를 함수 (자동 넘기기에 사용)
+  // opts.justCanceled: 바로 전에 읽던 걸 멈췄으면 true (iOS를 위해 잠깐 기다림)
+  function speak(d, btn, opts = {}) {
     if (!tts.ok) return;
     const same = tts.button === btn;
-    const wasBusy = stopSpeaking();
-    if (same && wasBusy) return; // 같은 버튼을 다시 누르면 멈춤
+    const wasBusy = stopSpeaking() || !!opts.justCanceled;
+    if (same && wasBusy && !opts.onDone) return; // 같은 버튼을 다시 누르면 멈춤
 
     const u = new SpeechSynthesisUtterance(speechText(d));
     u.lang = "ko-KR";
@@ -93,15 +96,19 @@
     if (tts.voice) u.voice = tts.voice;
     let started = false;
     u.onstart = () => { started = true; };
-    u.onend = () => {
-      if (tts.button === btn) {
-        setSpeaking(btn, false);
-        tts.button = null;
-      }
+    const finish = (natural) => {
+      if (tts.button !== btn) return; // 이미 다른 읽기로 바뀜
+      setSpeaking(btn, false);
+      tts.button = null;
+      if (natural && opts.onDone) opts.onDone();
     };
+    u.onend = () => finish(true);
     u.onerror = (e) => {
-      if (e.error !== "interrupted" && e.error !== "canceled") showSpeechHelp();
-      u.onend();
+      if (e.error !== "interrupted" && e.error !== "canceled") {
+        showSpeechHelp();
+        setAuto(false);
+      }
+      finish(false);
     };
     tts.button = btn;
     setSpeaking(btn, true);
@@ -114,6 +121,7 @@
       setTimeout(() => {
         if (!started && tts.button === btn && !speechSynthesis.speaking) {
           showSpeechHelp();
+          setAuto(false);
           setSpeaking(btn, false);
           tts.button = null;
         }
@@ -286,13 +294,54 @@
   }
 
   function openDetail(idx) {
-    stopSpeaking();
+    const wasBusy = stopSpeaking();
     fillDetail(idx);
     if (!dialog.open) {
       togglePanel(false);
       dialog.showModal();
     }
+    // 자동 읽기 중이면 넘어간 공룡도 이어서 읽어 줍니다.
+    if (state.auto) autoRead(wasBusy);
   }
+
+  /* ---------- 계속 넘기며 읽기 ---------- */
+  const autoBtn = $("#d-auto");
+  let autoTimer = 0;
+
+  function setAuto(on) {
+    state.auto = on;
+    clearTimeout(autoTimer);
+    autoBtn.setAttribute("aria-pressed", String(on));
+    autoBtn.textContent = on ? "⏸ 자동 읽기 멈추기" : "▶ 계속 넘기며 읽기";
+  }
+
+  function autoRead(justCanceled) {
+    clearTimeout(autoTimer);
+    speak(DINOSAURS[state.current], $("#d-speak"), {
+      justCanceled,
+      onDone: () => {
+        if (!state.auto || !dialog.open) return;
+        const list = state.visible.length ? state.visible : DINOSAURS;
+        // 마지막 공룡까지 읽으면 멈춥니다.
+        if (list.indexOf(DINOSAURS[state.current]) >= list.length - 1) return setAuto(false);
+        // 한숨 쉬고 다음 공룡으로 넘어가요.
+        autoTimer = setTimeout(() => {
+          if (state.auto && dialog.open) step(1);
+        }, 1500);
+      },
+    });
+  }
+
+  autoBtn.addEventListener("click", () => {
+    if (state.auto) {
+      setAuto(false);
+      stopSpeaking();
+    } else {
+      setAuto(true);
+      autoRead(false); // 버튼을 누른 순간 바로 읽어야 iOS에서 소리가 나요
+    }
+  });
+  if (!tts.ok) autoBtn.hidden = true;
 
   function step(dir) {
     // 지금 보이는 목록 안에서 이전/다음으로 이동합니다.
@@ -302,7 +351,15 @@
     openDetail(DINOSAURS.indexOf(list[pos]));
   }
 
-  $("#d-speak").addEventListener("click", (e) => speak(DINOSAURS[state.current], e.currentTarget));
+  $("#d-speak").addEventListener("click", (e) => {
+    if (state.auto) {
+      // 자동 읽기 중에 "그만 읽기"를 누르면 자동 읽기도 멈춰요.
+      setAuto(false);
+      stopSpeaking();
+      return;
+    }
+    speak(DINOSAURS[state.current], e.currentTarget);
+  });
   if (!tts.ok) $("#d-speak").hidden = true;
   $("#d-prev").addEventListener("click", () => step(-1));
   $("#d-next").addEventListener("click", () => step(1));
@@ -340,7 +397,10 @@
     touchX = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
   });
-  dialog.addEventListener("close", stopSpeaking);
+  dialog.addEventListener("close", () => {
+    setAuto(false);
+    stopSpeaking();
+  });
   dialog.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") step(-1);
     if (e.key === "ArrowRight") step(1);
