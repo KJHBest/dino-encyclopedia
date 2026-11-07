@@ -21,9 +21,9 @@
 
 ## 공룡 3D 모델 만드는 방법
 
-그림은 Codex, 3D 모양은 ComfyUI의 **Hunyuan3D-2mv (turbo)** 로 만들었어요. 자세한 순서는 [tools/README_pipeline.md](tools/README_pipeline.md).
+모두 내 컴퓨터의 ComfyUI로 만들었어요: 그림은 **Qwen-Image-2.1** (티라노 그림을 다른 공룡으로 고치기, 티라노 원본은 Codex), 3D 모양은 **Hunyuan3D-2mv (turbo)**. 자세한 순서는 [tools/README_pipeline.md](tools/README_pipeline.md).
 
-1. Codex로 공룡 4방향 그림(앞/왼쪽/뒤/오른쪽) 한 장
+1. 공룡 4방향 그림(앞/왼쪽/뒤/오른쪽) 한 장 — `tools/comfy2.py edit`
 2. `tools/hy3d.py` → ComfyUI Hunyuan3D로 3D 모양
 3. `tools/paint.py` → 가볍게 줄이고(약 1.6만 삼각형), 4방향 그림을 텍스처로 구워 입히기
 4. 게임에서는 셰이더로 다리·꼬리·목·날개를 움직여 걷는 모습을 만들어요

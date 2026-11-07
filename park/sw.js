@@ -1,6 +1,6 @@
 // 오프라인 저장: 한 번 열면 인터넷 없이도 놀 수 있어요.
 // 파일을 바꾸면 VERSION 숫자를 올려 주세요.
-const VERSION = "dinopark-v3";
+const VERSION = "dinopark-v4";
 
 const CORE = [
   "./",

@@ -14,8 +14,8 @@ from scipy import ndimage
 ROOT = Path(__file__).resolve().parent.parent
 VIEWS = ROOT / "assets_src" / "views"
 RAW = ROOT / "assets_src" / "raw"
-COMFY = "http://127.0.0.1:8188"
-COMFY_OUT = Path("D:/sd/ComfyUI_windows_portable/ComfyUI/output")
+COMFY = "http://127.0.0.1:8189"  # 새 ComfyUI(v0.44)
+COMFY_OUT = Path("D:/sd/ComfyUI_v044/ComfyUI_windows_portable/ComfyUI/output")
 CKPT = "hunyuan3d-dit-v2-mv-turbo_fp16.safetensors"
 PANELS = {"front": (0, 0), "left": (1, 0), "back": (0, 1), "right": (1, 1)}
 
