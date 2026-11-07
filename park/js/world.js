@@ -1,5 +1,6 @@
 // 공원 세상: 섬 땅, 호수, 길, 나무, 바위, 구역 표지판, 하늘
 import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export const WORLD = {
   radius: 175, // 섬 크기 (m)
@@ -265,7 +266,11 @@ function zoneAt(x, z) {
   return bd < 1.6 ? best : null;
 }
 
-function makeVegetation() {
+// 나무 자리 (3D 나무로 바꿀 때 다시 써요)
+let treeSpots = null;
+let vegGroup = null;
+
+function makeVegetation(low) {
   const kinds = treeKinds();
   const spots = { pine: [], broad: [], palm: [], fern: [] };
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
@@ -284,8 +289,12 @@ function makeVegetation() {
     let kind = zn ? zn.trees : (h > 7 ? "pine" : rnd() < 0.5 ? "broad" : "pine");
     if (kind === "none") kind = "broad";
     if (rnd() < 0.28) kind = "fern";
-    spots[kind].push([x, h, z, 0.75 + rnd() * 0.65, rnd() * Math.PI * 2]);
+    const sc = 0.75 + rnd() * 0.65, rot = rnd() * Math.PI * 2;
+    // 가벼운 모드(옛 기기)에서는 나무를 반만 심어요
+    if (low && i % 2) continue;
+    spots[kind].push([x, h, z, sc, rot]);
   }
+  treeSpots = spots;
   const g = new THREE.Group();
   for (const [name, list] of Object.entries(spots)) {
     const k = kinds[name];
@@ -299,8 +308,9 @@ function makeVegetation() {
       if (k.radius) colliders.add(x, z, k.radius * sc);
     });
     parts.forEach((im) => {
-      im.castShadow = name !== "fern";
+      im.castShadow = name !== "fern" && !low;
       im.receiveShadow = false;
+      im.userData.treeKind = name; // 3D 나무가 오면 이걸 빼요
       g.add(im);
     });
   }
@@ -322,11 +332,73 @@ function makeVegetation() {
     rim.setMatrixAt(i, m);
     if (sc > 0.9) colliders.add(x, z, sc * 1.1);
   });
-  rim.castShadow = true;
+  rim.castShadow = !low;
   rim.name = "rocks";
   occluders.push(rim);
   g.add(rim);
+  vegGroup = g;
   return g;
+}
+
+/* ---------- 3D 나무 (Hunyuan3D로 만든 모델) ---------- */
+// 종류마다 모델과 크기(m). 공원 전체를 60m 칸으로 나눠, 화면에 안 보이는 칸은 그리지 않아요.
+const TREE_MODELS = {
+  pine: [{ id: "tree_pine", height: 9.5 }],
+  broad: [{ id: "tree_broad", height: 7.2 }],
+  palm: [{ id: "tree_palm", height: 7.6 }],
+  fern: [{ id: "tree_cycad", height: 2.3 }, { id: "tree_bush", width: 3.4, every: 4 }],
+};
+const CHUNK = 60;
+
+export async function upgradeTrees(base, { shadows = true } = {}) {
+  if (!treeSpots || !vegGroup) return;
+  const loader = new GLTFLoader(), texLoader = new THREE.TextureLoader();
+  const ids = [...new Set(Object.values(TREE_MODELS).flat().map((v) => v.id))];
+  const loaded = {};
+  await Promise.all(ids.map(async (id) => {
+    try {
+      const [gltf, map, meta] = await Promise.all([
+        loader.loadAsync(`${base}/${id}.glb`),
+        texLoader.loadAsync(`${base}/${id}.webp`),
+        fetch(`${base}/meta/${id}.json`).then((r) => r.json()),
+      ]);
+      let geo = null;
+      gltf.scene.traverse((o) => { if (o.isMesh && !geo) geo = o.geometry; });
+      map.colorSpace = THREE.SRGBColorSpace;
+      map.flipY = false;
+      loaded[id] = { geo, meta, mat: new THREE.MeshLambertMaterial({ map }) };
+    } catch (e) {
+      console.warn(`${id}: 3D 나무를 못 불러와서 간단한 나무를 그대로 써요`, e.message);
+    }
+  }));
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sv = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  for (const [kind, variants] of Object.entries(TREE_MODELS)) {
+    if (!variants.every((v) => loaded[v.id])) continue; // 하나라도 없으면 이 종류는 그대로
+    // 자리마다 어떤 모델을 쓸지 정하고, 칸별로 모으기
+    const groups = new Map();
+    treeSpots[kind].forEach((spot, i) => {
+      const v = variants.find((vv) => vv.every && i % vv.every === 0) || variants.find((vv) => !vv.every);
+      const key = `${v.id}|${Math.floor(spot[0] / CHUNK)},${Math.floor(spot[2] / CHUNK)}`;
+      if (!groups.has(key)) groups.set(key, { v, list: [] });
+      groups.get(key).list.push(spot);
+    });
+    for (const { v, list } of groups.values()) {
+      const L = loaded[v.id];
+      const im = new THREE.InstancedMesh(L.geo, L.mat, list.length);
+      list.forEach(([x, h, z, sc, rot], i) => {
+        const k = (v.height ? v.height / L.meta.height : v.width) * sc;
+        q.setFromAxisAngle(up, rot);
+        m.compose(p.set(x, h - 0.15, z), q, sv.set(k, k, k));
+        im.setMatrixAt(i, m);
+      });
+      im.computeBoundingSphere();
+      im.castShadow = shadows && kind !== "fern";
+      im.userData.treeModel = v.id;
+      vegGroup.add(im);
+    }
+    // 예전 간단한 나무 빼기
+    vegGroup.children.filter((o) => o.userData.treeKind === kind).forEach((o) => vegGroup.remove(o));
+  }
 }
 
 /* ---------- 표지판, 광장 ---------- */
@@ -335,8 +407,15 @@ function labelTexture(text, sub, bg = "#2f7d4f") {
   cv.width = 512; cv.height = 256;
   const x = cv.getContext("2d");
   x.fillStyle = bg;
+  // 모서리가 둥근 네모 (옛 아이패드에는 roundRect가 없어서 직접 그려요)
   x.beginPath();
-  x.roundRect(8, 8, 496, 240, 36);
+  const r = 36, X0 = 8, Y0 = 8, X1 = 504, Y1 = 248;
+  x.moveTo(X0 + r, Y0);
+  x.arcTo(X1, Y0, X1, Y1, r);
+  x.arcTo(X1, Y1, X0, Y1, r);
+  x.arcTo(X0, Y1, X0, Y0, r);
+  x.arcTo(X0, Y0, X1, Y0, r);
+  x.closePath();
   x.fill();
   x.lineWidth = 10;
   x.strokeStyle = "#f6e7b8";
@@ -419,13 +498,13 @@ function makePlaza() {
   return g;
 }
 
-export function buildWorld(scene) {
+export function buildWorld(scene, { low = false } = {}) {
   scene.add(makeSky());
   const clouds = makeClouds();
   scene.add(clouds);
   scene.add(makeTerrain());
   scene.add(makeWater());
-  scene.add(makeVegetation());
+  scene.add(makeVegetation(low));
   scene.add(makePlaza());
   // 구역 표지판: 둥근 길에서 구역 쪽을 바라보도록
   for (const [key, zn] of Object.entries(ZONES)) {

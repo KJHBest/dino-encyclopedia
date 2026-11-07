@@ -108,7 +108,7 @@ function placeholder(d) {
 const loader = new GLTFLoader();
 const texLoader = new THREE.TextureLoader();
 
-async function loadSpecies(d, base) {
+async function loadSpecies(d, base, low) {
   try {
     const [gltf, meta, map] = await Promise.all([
       loader.loadAsync(`${base}/${d.id}.glb`),
@@ -119,7 +119,15 @@ async function loadSpecies(d, base) {
     gltf.scene.traverse((o) => { if (o.isMesh && !geo) geo = o.geometry; });
     map.colorSpace = THREE.SRGBColorSpace;
     map.flipY = false;
-    map.anisotropy = 4;
+    map.anisotropy = low ? 1 : 4;
+    // 가벼운 모드: 텍스처를 512로 줄여서 메모리를 아껴요
+    if (low && map.image && map.image.width > 512) {
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 512;
+      cv.getContext("2d").drawImage(map.image, 0, 0, 512, 512);
+      map.image = cv;
+      map.needsUpdate = true;
+    }
     return { geo, map, meta, color: "#ffffff" };
   } catch (e) {
     console.warn(`${d.id}: 3D 모델이 아직 없어서 임시 모양을 써요`, e.message);
@@ -286,7 +294,8 @@ class Dino {
 
 /* ---------- 전체 공룡 무리 ---------- */
 export class DinoPark {
-  constructor(scene, list) {
+  constructor(scene, list, { low = false } = {}) {
+    this.low = low;
     this.scene = scene;
     this.list = list;
     this.dinos = [];
@@ -300,13 +309,14 @@ export class DinoPark {
   async load(base, onProgress) {
     let done = 0;
     await Promise.all(this.list.map(async (d) => {
-      const sp = await loadSpecies(d, base);
+      const sp = await loadSpecies(d, base, this.low);
       this.species.set(d.id, sp);
       onProgress?.(++done / this.list.length);
     }));
     for (const d of this.list) {
       const sp = this.species.get(d.id);
-      const n = COUNT[d.id] || 1;
+      // 가벼운 모드에서는 무리를 줄여요 (종마다 적어도 한 마리)
+      const n = this.low ? Math.ceil((COUNT[d.id] || 1) / 2) : COUNT[d.id] || 1;
       for (let i = 0; i < n; i++) {
         const dino = new Dino(d, sp, i, this.rnd);
         this.dinos.push(dino);

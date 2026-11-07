@@ -1,23 +1,12 @@
 // 오프라인 저장: 한 번 열면 인터넷 없이도 놀 수 있어요.
 // 파일을 바꾸면 VERSION 숫자를 올려 주세요.
-const VERSION = "dinopark-v4";
+const VERSION = "dinopark-v5";
 
 const CORE = [
   "./",
   "index.html",
-  "css/style.css?v=3",
-  "js/main.js?v=3",
-  "js/world.js",
-  "js/jeep.js",
-  "js/input.js",
-  "js/dinos.js",
-  "js/speech.js",
-  "js/dinodata.js",
-  "vendor/three/three.module.js",
-  "vendor/three/three.core.js",
-  "vendor/three/addons/loaders/GLTFLoader.js",
-  "vendor/three/addons/utils/BufferGeometryUtils.js",
-  "vendor/three/addons/utils/SkeletonUtils.js",
+  "css/style.css?v=5",
+  "js/bundle.js?v=5",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
@@ -29,9 +18,14 @@ const IDS = [
   "dilophosaurus", "carnotaurus", "therizinosaurus", "gallimimus", "protoceratops", "styracosaurus",
   "coelophysis", "plateosaurus", "pteranodon", "koreaceratops",
 ];
-const ASSETS = IDS.flatMap((id) => [
+// 나무와 탈것 3D 모델
+const EXTRA = [
+  "tree_pine", "tree_broad", "tree_palm", "tree_cycad", "tree_bush",
+  "car_jeep", "car_dino", "car_bus", "car_buggy", "car_monster",
+].flatMap((id) => [`models/${id}.glb`, `models/${id}.webp`, `models/meta/${id}.json`]);
+const ASSETS = EXTRA.concat(IDS.flatMap((id) => [
   `models/${id}.glb`, `models/${id}.webp`, `models/meta/${id}.json`, `../images/thumb/${id}_wide.webp`,
-]);
+]));
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {

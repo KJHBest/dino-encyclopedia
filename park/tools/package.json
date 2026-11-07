@@ -1,0 +1,7 @@
+{
+  "name": "dinopark-tools",
+  "private": true,
+  "description": "다이노 파크를 옛 아이패드(iPadOS 15)에서도 돌아가게 하나의 파일로 묶는 도구",
+  "scripts": { "build": "node build.mjs" },
+  "devDependencies": { "esbuild": "^0.25.0" }
+}

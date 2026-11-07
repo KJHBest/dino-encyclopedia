@@ -2,3 +2,4 @@ originals/
 __pycache__/
 # 공룡 테마파크 3D 모델 원본 그림·중간 파일 (용량이 커서 올리지 않음)
 park/assets_src/
+park/tools/node_modules/

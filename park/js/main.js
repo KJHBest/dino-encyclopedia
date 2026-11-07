@@ -1,7 +1,7 @@
 // 다이노 파크: 지프를 타고 공룡을 찾아다니는 3D 게임
 import * as THREE from "three";
-import { buildWorld, heightAt, ZONES, LAKE, WORLD, occluders } from "./world.js";
-import { makeJeep, JeepController } from "./jeep.js";
+import { buildWorld, upgradeTrees, heightAt, ZONES, LAKE, WORLD, occluders } from "./world.js";
+import { makeVehicle, VEHICLES, JeepController } from "./jeep.js";
 import { Input } from "./input.js";
 import { DinoPark } from "./dinos.js";
 import { speech, storyText, ieyo, eulReul } from "./speech.js";
@@ -12,18 +12,24 @@ const isIOS = speech.isIOS;
 
 /* ---------- 3D 기본 ---------- */
 const canvas = $("#c");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-let pixelRatio = Math.min(window.devicePixelRatio || 1, isIOS ? 1.5 : 2);
+// 옛 기기(iPadOS 15 아이패드, 메모리 2GB 이하)는 가벼운 모드: 그림자 끄기, 해상도 낮추기, 나무·공룡 줄이기
+// 주소 끝에 ?low 를 붙이면 일부러 가벼운 모드로 볼 수 있어요.
+const safariMajor = Number((navigator.userAgent.match(/Version\/(\d+)/) || [])[1]) || 0;
+const LOW = new URLSearchParams(location.search).has("low") ||
+  (isIOS && safariMajor > 0 && safariMajor < 16) ||
+  (navigator.deviceMemory !== undefined && navigator.deviceMemory <= 2);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LOW, powerPreference: "high-performance" });
+let pixelRatio = LOW ? 1 : Math.min(window.devicePixelRatio || 1, isIOS ? 1.5 : 2);
 renderer.setPixelRatio(pixelRatio);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !LOW;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog("#cfe8f5", 110, 380);
-const camera = new THREE.PerspectiveCamera(55, 1, 0.5, 1500);
+scene.fog = LOW ? new THREE.Fog("#cfe8f5", 80, 260) : new THREE.Fog("#cfe8f5", 110, 380);
+const camera = new THREE.PerspectiveCamera(55, 1, 0.5, LOW ? 1000 : 1500);
 
 scene.add(new THREE.HemisphereLight("#cfe9ff", "#6b8f4e", 1.15));
 const sun = new THREE.DirectionalLight("#fff1d6", 2.3);
@@ -51,12 +57,15 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-const world = buildWorld(scene);
+const world = buildWorld(scene, { low: LOW });
 const pickBlockers = [scene.getObjectByName("terrain"), ...occluders].filter(Boolean);
-const jeepMesh = makeJeep();
-scene.add(jeepMesh);
-const jeep = new JeepController(jeepMesh);
-const park = new DinoPark(scene, PARK_DINOS);
+// 탈것: 지프 / 사파리 버스 / 번개 버기 / 몬스터 트럭 (고른 것을 기억해요)
+const VEHICLE_KEY = "dinopark-vehicle";
+let vehicleKind = VEHICLES[localStorage.getItem(VEHICLE_KEY)] ? localStorage.getItem(VEHICLE_KEY) : "jeep";
+const jeep = new JeepController(makeVehicle(vehicleKind));
+jeep.setVehicle(jeep.mesh, VEHICLES[vehicleKind]);
+scene.add(jeep.mesh);
+const park = new DinoPark(scene, PARK_DINOS, { low: LOW });
 
 /* ---------- 안내 화살표 (지프 위) ---------- */
 // 납작한 화살표 (뒤에서 봐도 방향이 잘 보이게 눕혀 놓아요, 끝이 +Z)
@@ -88,7 +97,7 @@ const state = {
   selectedUntil: 0,
   cardDino: null,
   guide: null, // { id, name, x, z, dino }
-  camDist: 17,
+  camDist: VEHICLES[vehicleKind].camDist,
   orbit: 0,
   orbitHold: 0,
 };
@@ -508,9 +517,54 @@ requestAnimationFrame(loop);
 /* ---------- 시작 ---------- */
 const go = $("#go");
 park.load("models", (p) => ($("#bar-fill").style.width = `${Math.round(p * 100)}%`)).then(() => {
+  // 3D 나무는 공룡 다음에 천천히 불러와요 (없으면 간단한 나무 그대로)
+  upgradeTrees("models", { shadows: !LOW });
   go.disabled = false;
   go.textContent = "🚙 출발!";
 });
+/* ---------- 탈것 고르기 ---------- */
+function setVehicle(kind, announce) {
+  if (!VEHICLES[kind]) return;
+  vehicleKind = kind;
+  localStorage.setItem(VEHICLE_KEY, kind);
+  const old = jeep.mesh;
+  const m = makeVehicle(kind);
+  m.position.copy(old.position);
+  m.quaternion.copy(old.quaternion);
+  scene.remove(old);
+  scene.add(m);
+  jeep.setVehicle(m, VEHICLES[kind]);
+  state.camDist = VEHICLES[kind].camDist;
+  document.querySelectorAll(".pick-car").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.kind === kind)));
+  $("#b-car").querySelector("span").textContent = VEHICLES[kind].emoji;
+  if (announce) {
+    const msg = `${VEHICLES[kind].name}${hasBatchim(VEHICLES[kind].name) ? "으로" : "로"} 바꿨어요!`;
+    toast(`${VEHICLES[kind].emoji} ${msg}`, 1800);
+    if (state.autoVoice) speech.say(msg, { id: "car" });
+  }
+}
+function hasBatchim(word) {
+  const c = word.charCodeAt(word.length - 1) - 0xac00;
+  return c >= 0 && c <= 11171 && c % 28 !== 0 && c % 28 !== 8; // ㄹ 받침은 "로"
+}
+// 시작 화면의 탈것 버튼
+const picker = $("#car-picker");
+Object.entries(VEHICLES).forEach(([kind, v]) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "pick-car";
+  b.dataset.kind = kind;
+  b.innerHTML = `<span class="pick-emoji">${v.emoji}</span><span class="pick-name">${v.name}</span>`;
+  b.addEventListener("click", () => setVehicle(kind, false));
+  picker.appendChild(b);
+});
+// 게임 중에는 🚗 버튼으로 다음 탈것으로 바꿔요
+$("#b-car").addEventListener("click", () => {
+  const kinds = Object.keys(VEHICLES);
+  setVehicle(kinds[(kinds.indexOf(vehicleKind) + 1) % kinds.length], true);
+});
+setVehicle(vehicleKind, false);
+
 go.addEventListener("click", () => {
   // 버튼을 누른 순간 소리를 켜 둬야 아이패드에서 읽어주기가 돼요
   if (state.autoVoice) speech.unlock("공룡 테마파크에 온 걸 환영해요! 화면을 끌어서 지프를 움직여 보세요.");
@@ -533,7 +587,7 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
 
 // 개발 확인용
 window.__park = {
-  park, jeep, state, found, camera, scene, renderer,
+  LOW, park, jeep, state, found, camera, scene, renderer,
   // 화면이 가려져 있을 때 시험용으로 프레임을 직접 돌리기
   tick(n = 1, ms = 16.7) { for (let i = 0; i < n; i++) frame(last + ms, true); },
 };
