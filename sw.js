@@ -1,14 +1,14 @@
 // 오프라인 저장: 한 번 열면 인터넷이 없어도 공룡 백과사전을 볼 수 있어요.
 // 파일을 바꾸면 VERSION 숫자를 올려 주세요.
-const VERSION = "dino-v6";
-importScripts("data.js?v=6"); // DINOSAURS 목록
+const VERSION = "dino-v7";
+importScripts("data.js?v=7"); // DINOSAURS 목록
 
 const CORE = [
   "./",
   "index.html",
-  "style.css?v=6",
-  "data.js?v=6",
-  "app.js?v=6",
+  "style.css?v=7",
+  "data.js?v=7",
+  "app.js?v=7",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",

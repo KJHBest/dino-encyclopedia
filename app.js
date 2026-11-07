@@ -421,6 +421,22 @@
     openDetail(pick);
   });
 
+  /* ---------- 처음 화면 (메인 메뉴) ---------- */
+  // 주소 끝이 #book이면 바로 백과사전, 아니면 처음 화면부터 보여 줘요.
+  const menu = $("#menu");
+  function showMenu(on) {
+    menu.hidden = !on;
+    document.body.style.overflow = on ? "hidden" : "";
+    history.replaceState(null, "", on ? location.pathname : "#book");
+    if (on) stopSpeaking();
+  }
+  showMenu(location.hash !== "#book");
+  $("#menu-book").addEventListener("click", () => {
+    showMenu(false);
+    window.scrollTo(0, 0);
+  });
+  $("#to-menu").addEventListener("click", () => showMenu(true));
+
   /* ---------- 앱처럼 설치 (홈 화면에 추가) ---------- */
   const standalone =
     window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;

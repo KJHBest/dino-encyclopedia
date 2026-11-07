@@ -13,9 +13,26 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="공룡 백과" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
+  <!-- 처음 화면: 백과사전 / 테마파크 고르기 -->
+  <div id="menu" class="menu">
+    <h1 class="menu-title"><span aria-hidden="true">🦖</span> 공룡 나라 <span aria-hidden="true">🦕</span></h1>
+    <p class="menu-sub">어디로 갈까요?</p>
+    <div class="menu-cards">
+      <button id="menu-book" class="menu-card" type="button">
+        <img src="images/thumb/triceratops_wide.webp" alt="" />
+        <span class="menu-name">📚 공룡 백과사전</span>
+        <span class="menu-desc">공룡 100마리 사진과 이야기</span>
+      </button>
+      <a id="menu-park" class="menu-card" href="park/">
+        <img src="images/menu_park.webp" alt="" />
+        <span class="menu-name">🚙 공룡 테마파크</span>
+        <span class="menu-desc">지프 타고 3D 공룡 찾기</span>
+      </a>
+    </div>
+  </div>
   <header class="top">
     <div class="top-inner">
       <h1 class="logo"><span aria-hidden="true">🦖</span> 공룡 백과사전</h1>
@@ -25,17 +42,12 @@
           <input id="search" type="search" placeholder="공룡 이름 찾기 (예: 티라노)" autocomplete="off" />
         </label>
         <button id="random" class="btn btn-accent" type="button">🎲 랜덤 공룡</button>
-        <a class="btn btn-park" href="park/">🚙 공룡 테마파크</a>
+        <button id="to-menu" class="btn btn-park" type="button">🏠 처음 화면</button>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <a class="park-banner" href="park/">
-      <span class="park-emoji" aria-hidden="true">🦖🚙🦕</span>
-      <span class="park-text"><b>공룡 테마파크</b><small>지프를 타고 3D 공룡 친구들을 찾으러 가요!</small></span>
-      <span class="park-go" aria-hidden="true">▶</span>
-    </a>
     <section class="filters" aria-label="필터">
       <div class="chip-row" role="group" aria-label="시대">
         <span class="chip-label">시대</span>
@@ -97,7 +109,7 @@
     <p>그림은 AI(Codex)로 그린 상상도예요. 실제 공룡의 색은 아직 아무도 몰라요!</p>
   </footer>
 
-  <script src="data.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="data.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

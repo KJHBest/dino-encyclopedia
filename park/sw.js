@@ -1,12 +1,12 @@
 // 오프라인 저장: 한 번 열면 인터넷 없이도 놀 수 있어요.
 // 파일을 바꾸면 VERSION 숫자를 올려 주세요.
-const VERSION = "dinopark-v2";
+const VERSION = "dinopark-v3";
 
 const CORE = [
   "./",
   "index.html",
-  "css/style.css?v=2",
-  "js/main.js?v=2",
+  "css/style.css?v=3",
+  "js/main.js?v=3",
   "js/world.js",
   "js/jeep.js",
   "js/input.js",
